@@ -1,0 +1,129 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Modèle pour les décrets
+model Decret {
+  id          String   @id @default(cuid())
+  numero      String   @unique
+  titre       String
+  description String?
+  dateCreation DateTime @default(now())
+  datePublication DateTime?
+  statut      StatutDecret @default(BROUILLON)
+  
+  // Fichiers associés
+  fichierExcel String?  // Chemin vers le fichier Excel
+  fichierPdf   String?  // Chemin vers le décret PDF signé
+  
+  // Relations
+  affectations Affectation[]
+  
+  @@map("decrets")
+}
+
+// Modèle pour les affectations individuelles
+model Affectation {
+  id                    String   @id @default(cuid())
+  prenom                String
+  nom                   String
+  dateNaissance         DateTime
+  lieuNaissance         String
+  niveauDiplome         String
+  specialite            String
+  etablissement         String
+  institutionAffectation String
+  
+  // Relation avec le décret
+  decretId              String
+  decret                Decret   @relation(fields: [decretId], references: [id], onDelete: Cascade)
+  
+  // Métadonnées
+  dateCreation          DateTime @default(now())
+  dateModification      DateTime @updatedAt
+  
+  @@map("affectations")
+}
+
+// Modèle pour les utilisateurs administrateurs
+model Utilisateur {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  nom         String
+  prenom      String
+  role        RoleUtilisateur @default(ADMIN)
+  motDePasse  String   // Hash du mot de passe
+  actif       Boolean  @default(true)
+  
+  dateCreation     DateTime @default(now())
+  dateModification DateTime @updatedAt
+  
+  @@map("utilisateurs")
+}
+
+// Modèle pour les logs d'activité
+model LogActivite {
+  id          String   @id @default(cuid())
+  action      String   // Type d'action (IMPORT, PUBLICATION, CONSULTATION, etc.)
+  description String
+  utilisateurId String?
+  adresseIp   String?
+  userAgent   String?
+  
+  // Données contextuelles
+  decretId    String?
+  metadonnees Json?    // Données supplémentaires en JSON
+  
+  dateCreation DateTime @default(now())
+  
+  @@map("logs_activite")
+}
+
+// Modèle pour les statistiques
+model Statistique {
+  id          String   @id @default(cuid())
+  type        TypeStatistique
+  periode     String   // Format: YYYY-MM ou YYYY
+  valeur      Int
+  metadonnees Json?
+  
+  dateCreation DateTime @default(now())
+  dateModification DateTime @updatedAt
+  
+  @@unique([type, periode])
+  @@map("statistiques")
+}
+
+// Énumérations
+enum StatutDecret {
+  BROUILLON
+  PUBLIE
+  ARCHIVE
+}
+
+enum RoleUtilisateur {
+  ADMIN
+  OPERATEUR
+  LECTEUR
+}
+
+enum TypeStatistique {
+  TOTAL_AFFECTATIONS
+  AFFECTATIONS_PAR_MOIS
+  AFFECTATIONS_PAR_INSTITUTION
+  AFFECTATIONS_PAR_DIPLOME
+  CONSULTATIONS_DECRETS
+  RECHERCHES_EFFECTUEES
+}
