@@ -42,7 +42,7 @@ export async function GET(
       const fileName = `${decret.numero}.pdf`;
 
       // Retourner le fichier PDF
-      return new NextResponse(fileBuffer, {
+      return new NextResponse(new Uint8Array(fileBuffer), {
         headers: {
           'Content-Type': 'application/pdf',
           'Content-Disposition': `attachment; filename="${fileName}"`

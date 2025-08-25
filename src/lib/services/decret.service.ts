@@ -39,7 +39,7 @@ export class DecretService {
     const worksheet = workbook.Sheets[sheetName];
     
     // Convertir en JSON
-    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as unknown[][];
     
     const data: ImportedData[] = [];
     const errors: ValidationError[] = [];
@@ -242,7 +242,14 @@ export class DecretService {
     const skip = (page - 1) * limit;
     
     // Construire les conditions de recherche
-    const whereConditions: any = {};
+    const whereConditions: {
+      OR?: Array<{
+        numero?: { contains: string };
+        titre?: { contains: string };
+        description?: { contains: string };
+      }>;
+      statut?: StatutDecret;
+    } = {};
     
     // Recherche par numéro ou titre
     if (search.trim()) {
