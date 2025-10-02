@@ -37,14 +37,14 @@ model Decret {
 // Modèle pour les affectations individuelles
 model Affectation {
   id                    String   @id @default(cuid())
-  prenom                String
   nom                   String
+  prenoms               String   // Changé de "prenom" à "prenoms" pour correspondre au modèle
   dateNaissance         DateTime
   lieuNaissance         String
-  niveauDiplome         String
-  specialite            String
-  etablissement         String
-  institutionAffectation String
+  diplome               String   // Changé de "niveauDiplome" à "diplome"
+  lieuObtentionDiplome  String   // Nouveau champ correspondant au modèle
+  lieuAffectation       String   // Changé de "institutionAffectation" à "lieuAffectation"
+  numeroDecret          String   // Nouveau champ pour le numéro de décret spécifique
   
   // Relation avec le décret
   decretId              String
@@ -82,6 +82,10 @@ model LogActivite {
   adresseIp   String?
   userAgent   String?
   
+  // Informations sur l'appareil
+  deviceType  String?  // Type d'appareil (Desktop, Mobile, Tablet)
+  deviceName  String?  // Nom de l'appareil/navigateur
+  
   // Données contextuelles
   decretId    String?
   metadonnees Json?    // Données supplémentaires en JSON
@@ -114,6 +118,7 @@ enum StatutDecret {
 }
 
 enum RoleUtilisateur {
+  SUPER_ADMIN
   ADMIN
   OPERATEUR
   LECTEUR

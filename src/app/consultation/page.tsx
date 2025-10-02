@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Search, Shield, ArrowLeft, User, Calendar, MapPin, Building, FileText, AlertCircle, Download, Filter, X } from 'lucide-react';
@@ -25,105 +25,6 @@ interface Assignment {
   };
 }
 
-// Mock data for demonstration (fallback)
-const mockAssignments: Assignment[] = [
-  {
-    id: '1',
-    prenom: 'Jean',
-    nom: 'Dupont',
-    dateNaissance: '1995-03-15',
-    lieuNaissance: 'Paris',
-    niveauDiplome: 'Master',
-    specialite: 'Informatique',
-    etablissement: 'Université de Paris',
-    institutionAffectation: 'Ministère de la Défense',
-    numeroDecret: 'Decret_2024_003'
-  },
-  {
-    id: '2',
-    prenom: 'Marie',
-    nom: 'Martin',
-    dateNaissance: '1996-07-22',
-    lieuNaissance: 'Lyon',
-    niveauDiplome: 'Licence',
-    specialite: 'Administration',
-    etablissement: 'Université Lyon 2',
-    institutionAffectation: 'Ministère de l\'Intérieur',
-    numeroDecret: 'Decret_2024_003'
-  },
-  {
-    id: '3',
-    prenom: 'Ahmed',
-    nom: 'Diallo',
-    dateNaissance: '1994-11-08',
-    lieuNaissance: 'Niamey',
-    niveauDiplome: 'Master',
-    specialite: 'Génie Civil',
-    etablissement: 'Université Abdou Moumouni',
-    institutionAffectation: 'Ministère des Infrastructures',
-    numeroDecret: 'Decret_2024_003'
-  },
-  {
-    id: '4',
-    prenom: 'Fatima',
-    nom: 'Ibrahim',
-    dateNaissance: '1997-05-12',
-    lieuNaissance: 'Zinder',
-    niveauDiplome: 'Licence',
-    specialite: 'Médecine',
-    etablissement: 'Université de Zinder',
-    institutionAffectation: 'Ministère de la Santé',
-    numeroDecret: 'Decret_2024_002'
-  },
-  {
-    id: '5',
-    prenom: 'Moussa',
-    nom: 'Garba',
-    dateNaissance: '1995-09-30',
-    lieuNaissance: 'Maradi',
-    niveauDiplome: 'Master',
-    specialite: 'Agriculture',
-    etablissement: 'Université de Maradi',
-    institutionAffectation: 'Ministère de l\'Agriculture',
-    numeroDecret: 'Decret_2024_002'
-  },
-  {
-    id: '6',
-    prenom: 'Aisha',
-    nom: 'Mamadou',
-    dateNaissance: '1996-12-18',
-    lieuNaissance: 'Tahoua',
-    niveauDiplome: 'Licence',
-    specialite: 'Économie',
-    etablissement: 'Université de Tahoua',
-    institutionAffectation: 'Ministère des Finances',
-    numeroDecret: 'Decret_2024_001'
-  },
-  {
-    id: '7',
-    prenom: 'Ibrahim',
-    nom: 'Sani',
-    dateNaissance: '1995-01-25',
-    lieuNaissance: 'Dosso',
-    niveauDiplome: 'Master',
-    specialite: 'Droit',
-    etablissement: 'Université de Dosso',
-    institutionAffectation: 'Ministère de la Justice',
-    numeroDecret: 'Decret_2024_001'
-  },
-  {
-    id: '8',
-    prenom: 'Salamatou',
-    nom: 'Abdou',
-    dateNaissance: '1996-08-14',
-    lieuNaissance: 'Agadez',
-    niveauDiplome: 'Licence',
-    specialite: 'Sociologie',
-    etablissement: 'Université d\'Agadez',
-    institutionAffectation: 'Ministère de l\'Action Sociale',
-    numeroDecret: 'Decret_2024_002'
-  }
-];
 
 export default function Consultation() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -138,20 +39,33 @@ export default function Consultation() {
   
   // Filter states
   const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState({
-    institution: '',
-    niveauDiplome: '',
-    specialite: '',
-    numeroDecret: '',
-    lieuNaissance: ''
+  const [advancedFilters, setAdvancedFilters] = useState({
+    nom: '',
+    prenoms: '',
+    dateNaissance: '',
+    lieuNaissance: '',
+    diplome: '',
+    institution: ''
   });
   const [filteredAssignments, setFilteredAssignments] = useState<Assignment[]>([]);
+  
+  // Autocomplete states
+  const [lieuNaissanceSuggestions, setLieuNaissanceSuggestions] = useState<string[]>([]);
+  const [institutionsList, setInstitutionsList] = useState<string[]>([]);
+  const [diplomeSuggestions, setDiplomeSuggestions] = useState<string[]>([]);
+  const [showLieuNaissanceDropdown, setShowLieuNaissanceDropdown] = useState(false);
+  const [showDiplomeDropdown, setShowDiplomeDropdown] = useState(false);
+  const lieuNaissanceRef = useRef<HTMLDivElement>(null);
+  const diplomeRef = useRef<HTMLDivElement>(null);
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(50);
   const [totalPages, setTotalPages] = useState(1);
   const [totalAssignments, setTotalAssignments] = useState(0);
+  
+  // Debounce timer ref
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load real data from API with pagination
   const loadAssignments = async (page?: number, limit?: number) => {
@@ -169,15 +83,15 @@ export default function Consultation() {
         // Transform data to match our interface
         const transformedAssignments: Assignment[] = data.affectations.map((item: any) => ({
           id: item.id,
-          prenom: item.prenom,
+          prenom: item.prenoms, // Mapping prenoms -> prenom
           nom: item.nom,
           dateNaissance: item.dateNaissance,
           lieuNaissance: item.lieuNaissance,
-          niveauDiplome: item.niveauDiplome,
-          specialite: item.specialite,
-          etablissement: item.etablissement,
-          institutionAffectation: item.institutionAffectation,
-          numeroDecret: item.decret.numero,
+          niveauDiplome: item.diplome || '', // Mapping diplome -> niveauDiplome avec fallback
+          specialite: '', // Champ vide car non disponible dans les données backend
+          etablissement: item.lieuObtentionDiplome || '', // Mapping lieuObtentionDiplome -> etablissement
+          institutionAffectation: item.lieuAffectation || '', // Mapping lieuAffectation -> institutionAffectation
+          numeroDecret: item.decret?.numero || '',
           decret: item.decret
         }));
         
@@ -187,23 +101,52 @@ export default function Consultation() {
         setTotalPages(data.pages);
       } else {
         console.error('Erreur API:', data.error);
-        // Fallback to mock data
-        setAllAssignments(mockAssignments);
-        setFilteredAssignments(mockAssignments);
-        setTotalAssignments(mockAssignments.length);
-        setTotalPages(1);
+        setAllAssignments([]);
+        setFilteredAssignments([]);
+        setTotalAssignments(0);
+        setTotalPages(0);
       }
     } catch (error) {
       console.error('Erreur lors du chargement:', error);
-      // Fallback to mock data
-      setAllAssignments(mockAssignments);
-      setFilteredAssignments(mockAssignments);
-      setTotalAssignments(mockAssignments.length);
-      setTotalPages(1);
+      setAllAssignments([]);
+      setFilteredAssignments([]);
+      setTotalAssignments(0);
+      setTotalPages(0);
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Charger la liste des institutions au chargement
+  useEffect(() => {
+    const loadInstitutions = async () => {
+      try {
+        const response = await fetch('/api/affectations/fields?field=institutionAffectation&q=');
+        if (response.ok) {
+          const data = await response.json();
+          setInstitutionsList(data.results || []);
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des institutions:', error);
+      }
+    };
+    loadInstitutions();
+  }, []);
+
+  // Fermer les dropdowns quand on clique à l'extérieur
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (lieuNaissanceRef.current && !lieuNaissanceRef.current.contains(event.target as Node)) {
+        setShowLieuNaissanceDropdown(false);
+      }
+      if (diplomeRef.current && !diplomeRef.current.contains(event.target as Node)) {
+        setShowDiplomeDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     loadAssignments();
@@ -219,92 +162,123 @@ export default function Consultation() {
     setCurrentPage(newPage);
   };
 
-  // Filter functions
-  const applyFilters = () => {
-    let filtered = mockAssignments;
-
-    if (filters.institution) {
-      filtered = filtered.filter(assignment => 
-        assignment.institutionAffectation.toLowerCase().includes(filters.institution.toLowerCase())
-      );
-    }
-
-    if (filters.niveauDiplome) {
-      filtered = filtered.filter(assignment => 
-        assignment.niveauDiplome === filters.niveauDiplome
-      );
-    }
-
-    if (filters.specialite) {
-      filtered = filtered.filter(assignment => 
-        assignment.specialite.toLowerCase().includes(filters.specialite.toLowerCase())
-      );
-    }
-
-    if (filters.numeroDecret) {
-      filtered = filtered.filter(assignment => 
-        assignment.numeroDecret === filters.numeroDecret
-      );
-    }
-
-    if (filters.lieuNaissance) {
-      filtered = filtered.filter(assignment => 
-        assignment.lieuNaissance.toLowerCase().includes(filters.lieuNaissance.toLowerCase())
-      );
-    }
-
-    setFilteredAssignments(filtered);
-  };
-
-  const clearFilters = () => {
-    setFilters({
-      institution: '',
-      niveauDiplome: '',
-      specialite: '',
-      numeroDecret: '',
-      lieuNaissance: ''
-    });
-    setFilteredAssignments(mockAssignments);
-  };
-
-  const handleFilterChange = (filterKey: string, value: string) => {
-    const newFilters = { ...filters, [filterKey]: value };
-    setFilters(newFilters);
+  // Filter functions - Recherche avec filtres avancés
+  const handleAdvancedSearch = async () => {
+    setIsSearching(true);
+    setHasSearched(true);
     
-    // Apply filters immediately
-    let filtered = mockAssignments;
+    try {
+      // Construire les paramètres de recherche
+      const params = new URLSearchParams();
+      
+      if (advancedFilters.nom) params.append('nom', advancedFilters.nom);
+      if (advancedFilters.prenoms) params.append('prenoms', advancedFilters.prenoms);
+      if (advancedFilters.dateNaissance) params.append('dateNaissance', advancedFilters.dateNaissance);
+      if (advancedFilters.lieuNaissance) params.append('lieuNaissance', advancedFilters.lieuNaissance);
+      if (advancedFilters.diplome) params.append('diplome', advancedFilters.diplome);
+      if (advancedFilters.institution) params.append('institution', advancedFilters.institution);
+      
+      params.append('limit', '50');
+      
+      const response = await fetch(`/api/affectations/search?${params.toString()}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Transformer les données pour correspondre à notre interface
+        const transformedResults: Assignment[] = data.affectations.map((item: any) => ({
+          id: item.id,
+          prenom: item.prenoms,
+          nom: item.nom,
+          dateNaissance: item.dateNaissance,
+          lieuNaissance: item.lieuNaissance,
+          niveauDiplome: item.diplome || '',
+          specialite: '',
+          etablissement: item.lieuObtentionDiplome || '',
+          institutionAffectation: item.lieuAffectation || '',
+          numeroDecret: item.decret?.numero || '',
+          decret: item.decret
+        }));
+        
+        setSearchResults(transformedResults);
+      } else {
+        setSearchResults([]);
+      }
+    } catch (error) {
+      console.error('Erreur lors de la recherche:', error);
+      setSearchResults([]);
+    }
+    
+    setIsSearching(false);
+  };
 
-    if (newFilters.institution) {
-      filtered = filtered.filter(assignment => 
-        assignment.institutionAffectation.toLowerCase().includes(newFilters.institution.toLowerCase())
-      );
+  const clearAdvancedFilters = () => {
+    setAdvancedFilters({
+      nom: '',
+      prenoms: '',
+      dateNaissance: '',
+      lieuNaissance: '',
+      diplome: '',
+      institution: ''
+    });
+  };
+
+  // Fonction pour récupérer les suggestions depuis l'API
+  const fetchSuggestions = useCallback(async (field: string, query: string) => {
+    if (!query.trim() || query.length < 2) {
+      switch (field) {
+        case 'lieuNaissance':
+          setLieuNaissanceSuggestions([]);
+          break;
+        case 'diplome':
+          setDiplomeSuggestions([]);
+          break;
+      }
+      return;
     }
 
-    if (newFilters.niveauDiplome) {
-      filtered = filtered.filter(assignment => 
-        assignment.niveauDiplome === newFilters.niveauDiplome
-      );
+    try {
+      const response = await fetch(`/api/affectations/fields?field=${field}&q=${encodeURIComponent(query)}`);
+      if (response.ok) {
+        const data = await response.json();
+        switch (field) {
+          case 'lieuNaissance':
+            setLieuNaissanceSuggestions(data.results || []);
+            break;
+          case 'diplome':
+            setDiplomeSuggestions(data.results || []);
+            break;
+        }
+      }
+    } catch (error) {
+      console.error('Erreur lors de la récupération des suggestions:', error);
     }
+  }, []);
 
-    if (newFilters.specialite) {
-      filtered = filtered.filter(assignment => 
-        assignment.specialite.toLowerCase().includes(newFilters.specialite.toLowerCase())
-      );
+  const handleAdvancedFilterChange = (filterKey: string, value: string) => {
+    const newFilters = { ...advancedFilters, [filterKey]: value };
+    setAdvancedFilters(newFilters);
+    
+    // Appliquer le debouncing pour les champs avec autocomplétion
+    if (filterKey === 'lieuNaissance' || filterKey === 'diplome') {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      
+      debounceTimerRef.current = setTimeout(() => {
+        const fieldMap: { [key: string]: string } = {
+          'lieuNaissance': 'lieuNaissance',
+          'diplome': 'diplome'
+        };
+        fetchSuggestions(fieldMap[filterKey], value);
+      }, 300);
     }
-
-    if (newFilters.numeroDecret) {
-      filtered = filtered.filter(assignment => 
-        assignment.numeroDecret === newFilters.numeroDecret
-      );
-    }
-
-    if (newFilters.lieuNaissance) {
-      filtered = filtered.filter(assignment => 
-        assignment.lieuNaissance.toLowerCase().includes(newFilters.lieuNaissance.toLowerCase())
-      );
-    }
-
-    setFilteredAssignments(filtered);
+  };
+  
+  const handleSuggestionSelect = (filterKey: string, value: string) => {
+    setAdvancedFilters({ ...advancedFilters, [filterKey]: value });
+    setShowLieuNaissanceDropdown(false);
+    setShowDiplomeDropdown(false);
   };
 
   // Get unique values for filter options
@@ -335,15 +309,15 @@ export default function Consultation() {
         // Transformer les données pour correspondre à notre interface
         const transformedResults: Assignment[] = data.affectations.map((item: any) => ({
           id: item.id,
-          prenom: item.prenom,
+          prenom: item.prenoms, // Mapping prenoms -> prenom
           nom: item.nom,
           dateNaissance: item.dateNaissance,
           lieuNaissance: item.lieuNaissance,
-          niveauDiplome: item.niveauDiplome,
-          specialite: item.specialite,
-          etablissement: item.etablissement,
-          institutionAffectation: item.institutionAffectation,
-          numeroDecret: item.decret.numero,
+          niveauDiplome: item.diplome || '', // Mapping diplome -> niveauDiplome avec fallback
+          specialite: '', // Champ vide car non disponible dans les données backend
+          etablissement: item.lieuObtentionDiplome || '', // Mapping lieuObtentionDiplome -> etablissement
+          institutionAffectation: item.lieuAffectation || '', // Mapping lieuAffectation -> institutionAffectation
+          numeroDecret: item.decret?.numero || '',
           decret: item.decret
         }));
         
@@ -480,9 +454,231 @@ export default function Consultation() {
           </div>
         </div>
 
+        {/* Filters Section - Always visible */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <Filter className="h-5 w-5 text-gray-600 mr-2" />
+              <h3 className="text-lg font-semibold text-gray-900">Filtres de recherche</h3>
+              {hasSearched && (
+                <span className="ml-3 text-sm text-green-600 font-medium">
+                  (Filtres actifs)
+                </span>
+              )}
+            </div>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="inline-flex items-center px-4 py-2 text-sm font-medium text-orange-600 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors"
+            >
+              {showFilters ? (
+                <>
+                  <X className="mr-2 h-4 w-4" />
+                  Masquer les filtres
+                </>
+              ) : (
+                <>
+                  <Filter className="mr-2 h-4 w-4" />
+                  Afficher les filtres
+                </>
+              )}
+            </button>
+          </div>
+
+          {showFilters && (
+            <div className="border-t border-gray-200 pt-6">
+              <p className="text-sm text-gray-600 mb-4">
+                Utilisez ces champs pour affiner votre recherche. Les filtres permettent de chercher par nom, prénom, date de naissance, lieu de naissance, diplôme et institution.
+              </p>
+              
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                {/* Nom Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nom
+                  </label>
+                  <input
+                    type="text"
+                    value={advancedFilters.nom}
+                    onChange={(e) => handleAdvancedFilterChange('nom', e.target.value)}
+                    placeholder="Ex: Diallo"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  />
+                </div>
+
+                {/* Prénoms Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Prénom(s)
+                  </label>
+                  <input
+                    type="text"
+                    value={advancedFilters.prenoms}
+                    onChange={(e) => handleAdvancedFilterChange('prenoms', e.target.value)}
+                    placeholder="Ex: Ahmed"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  />
+                </div>
+
+                {/* Date de naissance Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Date de naissance ou année
+                  </label>
+                  <input
+                    type="text"
+                    value={advancedFilters.dateNaissance}
+                    onChange={(e) => handleAdvancedFilterChange('dateNaissance', e.target.value)}
+                    placeholder="Ex: 1995 ou 15/3/1995"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Format: AAAA ou JJ/MM/AAAA</p>
+                </div>
+
+                {/* Lieu de naissance Filter with Autocomplete */}
+                <div ref={lieuNaissanceRef} className="relative">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Lieu de naissance
+                  </label>
+                  <input
+                    type="text"
+                    value={advancedFilters.lieuNaissance}
+                    onChange={(e) => {
+                      handleAdvancedFilterChange('lieuNaissance', e.target.value);
+                      setShowLieuNaissanceDropdown(true);
+                    }}
+                    onFocus={() => {
+                      if (lieuNaissanceSuggestions.length > 0) {
+                        setShowLieuNaissanceDropdown(true);
+                      }
+                    }}
+                    placeholder="Ex: Niamey"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  />
+                  {showLieuNaissanceDropdown && lieuNaissanceSuggestions.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      {lieuNaissanceSuggestions.map((suggestion, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => handleSuggestionSelect('lieuNaissance', suggestion)}
+                          className="w-full text-left px-3 py-2 hover:bg-blue-50 text-sm border-b border-gray-100 last:border-b-0"
+                        >
+                          <MapPin className="inline h-3 w-3 mr-2 text-gray-400" />
+                          {suggestion}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-500 mt-1">Tapez au moins 2 caractères pour des suggestions</p>
+                </div>
+
+                {/* Diplôme Filter with Autocomplete */}
+                <div ref={diplomeRef} className="relative">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Diplôme
+                  </label>
+                  <input
+                    type="text"
+                    value={advancedFilters.diplome}
+                    onChange={(e) => {
+                      handleAdvancedFilterChange('diplome', e.target.value);
+                      setShowDiplomeDropdown(true);
+                    }}
+                    onFocus={() => {
+                      if (diplomeSuggestions.length > 0) {
+                        setShowDiplomeDropdown(true);
+                      }
+                    }}
+                    placeholder="Ex: Master, Licence"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  />
+                  {showDiplomeDropdown && diplomeSuggestions.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      {diplomeSuggestions.map((suggestion, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => handleSuggestionSelect('diplome', suggestion)}
+                          className="w-full text-left px-3 py-2 hover:bg-blue-50 text-sm border-b border-gray-100 last:border-b-0"
+                        >
+                          <FileText className="inline h-3 w-3 mr-2 text-gray-400" />
+                          {suggestion}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-500 mt-1">Tapez au moins 2 caractères pour des suggestions</p>
+                </div>
+
+                {/* Institution d'affectation Filter with Select */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Institution d'affectation
+                  </label>
+                  <select
+                    value={advancedFilters.institution}
+                    onChange={(e) => handleAdvancedFilterChange('institution', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  >
+                    <option value="">-- Toutes les institutions --</option>
+                    {institutionsList.map((institution, index) => (
+                      <option key={index} value={institution}>
+                        {institution}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Filter Actions */}
+              <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                <div className="text-sm text-gray-600">
+                  {hasSearched ? (
+                    <span className="text-green-600 font-medium">
+                      Recherche active • Modifiez les filtres et cliquez sur Rechercher pour mettre à jour
+                    </span>
+                  ) : (
+                    'Remplissez un ou plusieurs champs puis cliquez sur Rechercher'
+                  )}
+                </div>
+                <div className="flex space-x-2">
+                  {hasSearched && (
+                    <button
+                      onClick={() => {
+                        setHasSearched(false);
+                        setSearchResults([]);
+                        clearAdvancedFilters();
+                      }}
+                      className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gray-600 rounded-lg hover:bg-gray-700 transition-colors"
+                    >
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      Nouvelle recherche
+                    </button>
+                  )}
+                  <button
+                    onClick={clearAdvancedFilters}
+                    className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    <X className="mr-2 h-4 w-4" />
+                    Effacer
+                  </button>
+                  <button
+                    onClick={handleAdvancedSearch}
+                    disabled={isSearching || Object.values(advancedFilters).every(v => !v.trim())}
+                    className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <Search className="mr-2 h-4 w-4" />
+                    Rechercher
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Search Results */}
         {hasSearched && (
-          <div className="bg-white rounded-xl shadow-lg p-8">
+          <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
             {searchResults.length > 0 ? (
               <>
                 <div className="flex items-center justify-between mb-6">
@@ -606,139 +802,6 @@ export default function Consultation() {
                       </ul>
                     </div>
                   </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-        
-        {/* Filters Section */}
-        {!hasSearched && (
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center">
-                <Filter className="h-5 w-5 text-gray-600 mr-2" />
-                <h3 className="text-lg font-semibold text-gray-900">Filtres</h3>
-              </div>
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="inline-flex items-center px-4 py-2 text-sm font-medium text-orange-600 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors"
-              >
-                {showFilters ? (
-                  <>
-                    <X className="mr-2 h-4 w-4" />
-                    Masquer les filtres
-                  </>
-                ) : (
-                  <>
-                    <Filter className="mr-2 h-4 w-4" />
-                    Afficher les filtres
-                  </>
-                )}
-              </button>
-            </div>
-
-            {showFilters && (
-              <div className="border-t border-gray-200 pt-6">
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                  {/* Institution Filter */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Institution d'affectation
-                    </label>
-                    <select
-                      value={filters.institution}
-                      onChange={(e) => handleFilterChange('institution', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    >
-                      <option value="">Toutes les institutions</option>
-                      {getUniqueInstitutions().map(institution => (
-                        <option key={institution} value={institution}>{institution}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Niveau Diplome Filter */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Niveau de diplôme
-                    </label>
-                    <select
-                      value={filters.niveauDiplome}
-                      onChange={(e) => handleFilterChange('niveauDiplome', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    >
-                      <option value="">Tous les niveaux</option>
-                      {getUniqueNiveauxDiplome().map(niveau => (
-                        <option key={niveau} value={niveau}>{niveau}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Specialite Filter */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Spécialité
-                    </label>
-                    <select
-                      value={filters.specialite}
-                      onChange={(e) => handleFilterChange('specialite', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    >
-                      <option value="">Toutes les spécialités</option>
-                      {getUniqueSpecialites().map(specialite => (
-                        <option key={specialite} value={specialite}>{specialite}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Decree Filter */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Numéro de décret
-                    </label>
-                    <select
-                      value={filters.numeroDecret}
-                      onChange={(e) => handleFilterChange('numeroDecret', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    >
-                      <option value="">Tous les décrets</option>
-                      {getUniqueDecrets().map(decret => (
-                        <option key={decret} value={decret}>{decret}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Lieu de naissance Filter */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Lieu de naissance
-                    </label>
-                    <select
-                      value={filters.lieuNaissance}
-                      onChange={(e) => handleFilterChange('lieuNaissance', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    >
-                      <option value="">Tous les lieux</option>
-                      {getUniqueLieuxNaissance().map(lieu => (
-                        <option key={lieu} value={lieu}>{lieu}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Filter Actions */}
-                <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                  <div className="text-sm text-gray-600">
-                    {filteredAssignments.length} affectation{filteredAssignments.length > 1 ? 's' : ''} trouvée{filteredAssignments.length > 1 ? 's' : ''}
-                  </div>
-                  <button
-                    onClick={clearFilters}
-                    className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                  >
-                    <X className="mr-2 h-4 w-4" />
-                    Effacer les filtres
-                  </button>
                 </div>
               </div>
             )}

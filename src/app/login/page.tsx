@@ -14,34 +14,40 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  // Identifiants par défaut (en production, ceci devrait être géré par une API sécurisée)
-  const ADMIN_CREDENTIALS = {
-    username: 'admin',
-    password: 'ansi2024'
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
-    // Simulation d'une vérification d'authentification
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Vérification d'authentification via API
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
 
-    if (formData.username === ADMIN_CREDENTIALS.username && 
-        formData.password === ADMIN_CREDENTIALS.password) {
-      // Stocker le token d'authentification dans localStorage
-      localStorage.setItem('ansi_admin_token', 'authenticated');
-      localStorage.setItem('ansi_admin_user', JSON.stringify({
-        username: formData.username,
-        role: 'admin',
-        loginTime: new Date().toISOString()
-      }));
-      
-      // Rediriger vers le panneau d'administration
-      router.push('/ansi-admin');
-    } else {
-      setError('Nom d\'utilisateur ou mot de passe incorrect');
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Stocker le token d'authentification dans localStorage
+        localStorage.setItem('ansi_admin_token', data.token || 'authenticated');
+        localStorage.setItem('ansi_admin_user', JSON.stringify({
+          username: formData.username,
+          role: 'superadmin',
+          loginTime: new Date().toISOString()
+        }));
+        
+        // Rediriger vers le panneau d'administration
+        router.push('/ansi-admin');
+      } else {
+        setError(data.message || 'Nom d\'utilisateur ou mot de passe incorrect');
+      }
+    } catch (error) {
+      console.error('Erreur de connexion:', error);
+      setError('Une erreur est survenue lors de la connexion');
     }
     
     setIsLoading(false);
@@ -68,10 +74,10 @@ export default function LoginPage() {
             </div>
           </div>
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            Administration ANSI
+            Espace Administrateur
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Connectez-vous pour accéder au panneau d'administration
+            Accès réservé au personnel autorisé
           </p>
         </div>
 
@@ -157,15 +163,6 @@ export default function LoginPage() {
               </button>
             </div>
           </form>
-
-          {/* Informations de test */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-md">
-            <h3 className="text-sm font-medium text-gray-700 mb-2">Identifiants de test :</h3>
-            <div className="text-xs text-gray-600 space-y-1">
-              <p><strong>Nom d'utilisateur :</strong> admin</p>
-              <p><strong>Mot de passe :</strong> ansi2024</p>
-            </div>
-          </div>
         </div>
 
         {/* Liens utiles */}

@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
         orderBy: [
           { decret: { datePublication: 'desc' } },
           { nom: 'asc' },
-          { prenom: 'asc' }
+          { prenoms: 'asc' }
         ]
       }),
       prisma.affectation.count({

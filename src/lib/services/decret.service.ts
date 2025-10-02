@@ -1,8 +1,22 @@
 import { prisma } from '../prisma';
 import { StatutDecret } from '../../generated/prisma';
 import * as XLSX from 'xlsx';
+import { parse } from 'csv-parse/sync';
 
 export interface ImportedData {
+  nom: string;
+  prenoms: string;
+  dateNaissance: string;
+  lieuNaissance: string;
+  diplome: string;
+  lieuObtentionDiplome: string;
+  lieuAffectation: string;
+  numeroDecret: string;
+}
+
+// Interface pour l'affichage frontend (compatibilité)
+export interface DisplayData {
+  id: string;
   prenom: string;
   nom: string;
   dateNaissance: string;
@@ -11,6 +25,7 @@ export interface ImportedData {
   specialite: string;
   etablissement: string;
   institutionAffectation: string;
+  numeroDecret: string;
 }
 
 export interface ValidationError {
@@ -52,15 +67,37 @@ export class DecretService {
     
     // Mapper les colonnes attendues
     const columnMapping = {
-      prenom: this.findColumnIndex(headers, ['prénom', 'prenom', 'firstname']),
+      prenoms: this.findColumnIndex(headers, ['prénom(s)', 'prénoms', 'prénom', 'prenom', 'firstname']),
       nom: this.findColumnIndex(headers, ['nom', 'lastname', 'name']),
-      dateNaissance: this.findColumnIndex(headers, ['date naissance', 'date_naissance', 'birthdate']),
-      lieuNaissance: this.findColumnIndex(headers, ['lieu naissance', 'lieu_naissance', 'birthplace']),
-      niveauDiplome: this.findColumnIndex(headers, ['niveau diplôme', 'niveau diplome', 'niveau_diplome', 'diploma_level']),
-      specialite: this.findColumnIndex(headers, ['spécialité', 'specialite', 'specialty']),
-      etablissement: this.findColumnIndex(headers, ['établissement', 'etablissement', 'institution']),
-      institutionAffectation: this.findColumnIndex(headers, ['institution affectation', 'institution_affectation', 'assignment'])
+      dateNaissance: this.findColumnIndex(headers, ['date de naissance', 'date naissance', 'date_naissance', 'birthdate']),
+      lieuNaissance: this.findColumnIndex(headers, ['lieu de naissance', 'lieu naissance', 'lieu_naissance', 'birthplace']),
+      diplome: this.findColumnIndex(headers, ['diplôme', 'diplome', 'niveau diplôme', 'niveau diplome', 'niveau_diplome', 'diploma_level']),
+      lieuObtentionDiplome: this.findColumnIndex(headers, [
+        "lieu d'obtention du diplôme",
+        "lieu d'obtention du diplome",
+        'lieu obtention diplôme',
+        'lieu obtention diplome',
+        'établissement',
+        'etablissement',
+        'institution'
+      ]),
+      lieuAffectation: this.findColumnIndex(headers, [
+        "lieu d'affectation",
+        'lieu affectation',
+        'institution affectation',
+        'institution_affectation',
+        'assignment'
+      ]),
+      numeroDecret: this.findColumnIndex(headers, [
+        'numéro de décret',
+        'numero de decret',
+        'numéro décret',
+        'numero decret',
+        'decree_number'
+      ])
     };
+
+    const optionalFields: (keyof ImportedData)[] = ['numeroDecret', 'lieuObtentionDiplome'];
     
     // Debug: afficher le mapping des colonnes
     console.log('Mapping des colonnes:', columnMapping);
@@ -75,23 +112,30 @@ export class DecretService {
       
       // Extraire les données de chaque colonne
       Object.entries(columnMapping).forEach(([field, columnIndex]) => {
+        const typedField = field as keyof ImportedData;
+        const isOptional = optionalFields.includes(typedField);
+
         if (columnIndex !== -1) {
           const value = row[columnIndex];
           if (value !== undefined && value !== null && value !== '') {
-            rowData[field as keyof ImportedData] = String(value).trim();
-          } else {
+            rowData[typedField] = String(value).trim();
+          } else if (!isOptional) {
             rowErrors.push({
               row: i + 1,
               field,
               message: `Champ requis manquant`
             });
+          } else if (rowData[typedField] === undefined) {
+            rowData[typedField] = 'Non renseigné';
           }
-        } else {
+        } else if (!isOptional) {
           rowErrors.push({
             row: i + 1,
             field,
             message: `Colonne non trouvée dans le fichier Excel`
           });
+        } else if (rowData[typedField] === undefined) {
+          rowData[typedField] = 'Non renseigné';
         }
       });
       
@@ -102,7 +146,7 @@ export class DecretService {
           rowErrors.push({
             row: i + 1,
             field: 'dateNaissance',
-            message: 'Format de date invalide. Utilisez le format J/M/AAAA ou J/M/AA (ex: 15/3/1995 ou 15/3/95)'
+            message: 'Format de date invalide. Utilisez le format J/M/AAAA, J/M/AA (ex: 15/3/1995 ou 15/3/95) ou AAAA pour l\'année seule (ex: 1996)'
           });
         } else {
           // Remplacer par la date parsée au format ISO
@@ -121,7 +165,155 @@ export class DecretService {
   }
   
   /**
-   * Parse une date au format J/M/AAAA, JJ/MM/AAAA, J/M/AA ou JJ/MM/AA
+   * Traite un fichier CSV et extrait les données d'affectation
+   */
+  static async processCsvFile(file: File): Promise<{
+    data: ImportedData[];
+    errors: ValidationError[];
+  }> {
+    const buffer = await file.arrayBuffer();
+    const text = new TextDecoder('utf-8').decode(buffer);
+    
+    const data: ImportedData[] = [];
+    const errors: ValidationError[] = [];
+    
+    try {
+      // Détecter le délimiteur (virgule ou point-virgule)
+      const firstLine = text.split('\n')[0];
+      const delimiter = firstLine.includes(';') ? ';' : ',';
+      
+      console.log('Délimiteur CSV détecté:', delimiter);
+      
+      // Parser le CSV
+      const records = parse(text, {
+        columns: true,
+        skip_empty_lines: true,
+        trim: true,
+        bom: true,
+        relax_column_count: true,
+        relax_quotes: true,
+        delimiter: delimiter
+      }) as Record<string, string>[];
+      
+      if (!records || records.length === 0) {
+        errors.push({
+          row: 0,
+          field: 'general',
+          message: 'Le fichier CSV est vide'
+        });
+        return { data, errors };
+      }
+
+      // Obtenir les en-têtes depuis le premier enregistrement
+      const headers = Object.keys(records[0] as Record<string, unknown>);
+      console.log('En-têtes détectés dans le fichier CSV:', headers);
+      
+      // Mapper les colonnes attendues
+      const columnMapping = {
+        prenoms: this.findColumnName(headers, ['prénom(s)', 'prénoms', 'prénom', 'prenom', 'firstname']),
+        nom: this.findColumnName(headers, ['nom', 'lastname', 'name']),
+        dateNaissance: this.findColumnName(headers, ['date de naissance', 'date naissance', 'date_naissance', 'birthdate']),
+        lieuNaissance: this.findColumnName(headers, ['lieu de naissance', 'lieu naissance', 'lieu_naissance', 'birthplace']),
+        diplome: this.findColumnName(headers, ['diplôme', 'diplome', 'niveau diplôme', 'niveau diplome', 'niveau_diplome', 'diploma_level']),
+        lieuObtentionDiplome: this.findColumnName(headers, [
+          "lieu d'obtention du diplôme",
+          "lieu d'obtention du diplome",
+          'lieu obtention diplôme',
+          'lieu obtention diplome',
+          'établissement',
+          'etablissement',
+          'institution'
+        ]),
+        lieuAffectation: this.findColumnName(headers, [
+          "lieu d'affectation",
+          'lieu affectation',
+          'institution affectation',
+          'institution_affectation',
+          'assignment'
+        ]),
+        numeroDecret: this.findColumnName(headers, [
+          'numéro de décret',
+          'numero de decret',
+          'numéro décret',
+          'numero decret',
+          'decree_number'
+        ])
+      };
+
+      const optionalFields: (keyof ImportedData)[] = ['numeroDecret', 'lieuObtentionDiplome'];
+      
+      console.log('Mapping des colonnes:', columnMapping);
+      
+      // Traiter chaque ligne
+      records.forEach((record: Record<string, string>, index: number) => {
+        const rowData: Partial<ImportedData> = {};
+        const rowErrors: ValidationError[] = [];
+        
+        // Extraire les données de chaque colonne
+        Object.entries(columnMapping).forEach(([field, columnName]) => {
+          const typedField = field as keyof ImportedData;
+          const isOptional = optionalFields.includes(typedField);
+
+          if (columnName) {
+            const value = record[columnName];
+            if (value !== undefined && value !== null && value.trim() !== '') {
+              rowData[typedField] = value.trim();
+            } else if (!isOptional) {
+              rowErrors.push({
+                row: index + 2, // +2 car index commence à 0 et on saute l'en-tête
+                field,
+                message: `Champ requis manquant`
+              });
+            } else if (rowData[typedField] === undefined) {
+              rowData[typedField] = 'Non renseigné';
+            }
+          } else if (!isOptional) {
+            rowErrors.push({
+              row: index + 2,
+              field,
+              message: `Colonne non trouvée dans le fichier CSV`
+            });
+          } else if (rowData[typedField] === undefined) {
+            rowData[typedField] = 'Non renseigné';
+          }
+        });
+        
+        // Validation des données
+        if (rowData.dateNaissance) {
+          const parsedDate = this.parseDate(rowData.dateNaissance);
+          if (!parsedDate) {
+            rowErrors.push({
+              row: index + 2,
+              field: 'dateNaissance',
+              message: 'Format de date invalide. Utilisez le format J/M/AAAA, J/M/AA (ex: 15/3/1995 ou 15/3/95) ou AAAA pour l\'année seule (ex: 1996)'
+            });
+          } else {
+            // Remplacer par la date parsée au format ISO
+            rowData.dateNaissance = parsedDate.toISOString().split('T')[0];
+          }
+        }
+        
+        if (rowErrors.length === 0) {
+          data.push(rowData as ImportedData);
+        } else {
+          errors.push(...rowErrors);
+        }
+      });
+      
+    } catch (error) {
+      console.error('Erreur lors du parsing CSV:', error);
+      errors.push({
+        row: 0,
+        field: 'general',
+        message: `Erreur lors du parsing du fichier CSV: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
+      });
+    }
+    
+    return { data, errors };
+  }
+
+  /**
+   * Parse une date au format J/M/AAAA, JJ/MM/AAAA, J/M/AA, JJ/MM/AA ou AAAA (année seule)
    */
   private static parseDate(dateString: string): Date | null {
     if (!dateString || typeof dateString !== 'string') {
@@ -130,6 +322,22 @@ export class DecretService {
 
     // Nettoyer la chaîne
     const cleanDate = dateString.trim();
+    
+    // Vérifier si c'est seulement une année (4 chiffres)
+    const yearOnlyRegex = /^(\d{4})$/;
+    const yearMatch = cleanDate.match(yearOnlyRegex);
+    
+    if (yearMatch) {
+      const year = parseInt(yearMatch[1], 10);
+      
+      // Validation de l'année
+      if (year < 1900 || year > 2100) {
+        return null;
+      }
+      
+      // Compléter avec 01/01 pour l'année fournie
+      return new Date(year, 0, 1); // 1er janvier de l'année
+    }
     
     // Vérifier le format J/M/AAAA, JJ/MM/AAAA, J/M/AA ou JJ/MM/AA
     const dateRegex = /^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/;
@@ -182,6 +390,53 @@ export class DecretService {
     }
     return -1;
   }
+
+  /**
+   * Trouve le nom d'une colonne basé sur des noms possibles (pour CSV)
+   */
+  private static findColumnName(headers: string[], possibleNames: string[]): string | null {
+    for (const name of possibleNames) {
+      const found = headers.find(header => 
+        header && typeof header === 'string' && 
+        header.toLowerCase().trim() === name.toLowerCase().trim()
+      );
+      if (found) return found;
+    }
+    return null;
+  }
+
+  /**
+   * Convertit les données ImportedData vers DisplayData pour la compatibilité frontend
+   */
+  static convertToDisplayData(importedData: ImportedData[], numeroDecret: string): DisplayData[] {
+    return importedData.map((item, index) => ({
+      id: (index + 1).toString(),
+      prenom: item.prenoms, // Mapping prenoms -> prenom
+      nom: item.nom,
+      dateNaissance: item.dateNaissance,
+      lieuNaissance: item.lieuNaissance,
+      niveauDiplome: item.diplome, // Mapping diplome -> niveauDiplome
+      specialite: '', // Champ vide car non disponible dans ImportedData
+      etablissement: item.lieuObtentionDiplome, // Mapping lieuObtentionDiplome -> etablissement
+      institutionAffectation: item.lieuAffectation, // Mapping lieuAffectation -> institutionAffectation
+      numeroDecret: item.numeroDecret || numeroDecret
+    }));
+  }
+
+  /**
+   * Trie les données par ordre alphabétique (nom, puis prénom)
+   */
+  static sortDataAlphabetically(data: ImportedData[]): ImportedData[] {
+    return [...data].sort((a, b) => {
+      // Tri par nom d'abord
+      const nomComparison = a.nom.localeCompare(b.nom, 'fr', { sensitivity: 'base' });
+      if (nomComparison !== 0) {
+        return nomComparison;
+      }
+      // Si les noms sont identiques, trier par prénom
+      return a.prenoms.localeCompare(b.prenoms, 'fr', { sensitivity: 'base' });
+    });
+  }
   
   /**
    * Crée un nouveau décret avec ses affectations
@@ -202,14 +457,14 @@ export class DecretService {
         statut: StatutDecret.BROUILLON,
         affectations: {
           create: affectations.map(affectation => ({
-            prenom: affectation.prenom,
+            prenoms: affectation.prenoms,
             nom: affectation.nom,
             dateNaissance: new Date(affectation.dateNaissance),
             lieuNaissance: affectation.lieuNaissance,
-            niveauDiplome: affectation.niveauDiplome,
-            specialite: affectation.specialite,
-            etablissement: affectation.etablissement,
-            institutionAffectation: affectation.institutionAffectation
+            diplome: affectation.diplome,
+            lieuObtentionDiplome: affectation.lieuObtentionDiplome,
+            lieuAffectation: affectation.lieuAffectation,
+            numeroDecret: affectation.numeroDecret
           }))
         }
       },
@@ -292,9 +547,9 @@ export class DecretService {
           },
           affectations: {
             select: {
-              institutionAffectation: true
+              lieuAffectation: true
             },
-            distinct: ['institutionAffectation']
+            distinct: ['lieuAffectation']
           }
         }
       }),
@@ -324,24 +579,92 @@ export class DecretService {
   }
   
   /**
-   * Recherche dans les affectations
+   * Recherche dans les affectations avec filtres avancés
    */
-  static async searchAffectations(query: string, page: number = 1, limit: number = 10) {
+  static async searchAffectations(
+    query: string = '', 
+    page: number = 1, 
+    limit: number = 10,
+    filters?: {
+      nom?: string;
+      prenoms?: string;
+      dateNaissance?: string;
+      lieuNaissance?: string;
+      diplome?: string;
+      institution?: string;
+    }
+  ) {
     const skip = (page - 1) * limit;
+    
+    // Construire les conditions de recherche
+    const whereConditions: any = {
+      decret: {
+        statut: StatutDecret.PUBLIE
+      }
+    };
+
+    const searchConditions: any[] = [];
+
+    // Si query est fourni, rechercher dans tous les champs
+    if (query && query.trim()) {
+      searchConditions.push(
+        { prenoms: { contains: query, mode: 'insensitive' } },
+        { nom: { contains: query, mode: 'insensitive' } },
+        { lieuAffectation: { contains: query, mode: 'insensitive' } },
+        { diplome: { contains: query, mode: 'insensitive' } },
+        { lieuObtentionDiplome: { contains: query, mode: 'insensitive' } },
+        { lieuNaissance: { contains: query, mode: 'insensitive' } }
+      );
+    }
+
+    // Appliquer les filtres spécifiques
+    if (filters) {
+      if (filters.nom?.trim()) {
+        searchConditions.push({ nom: { contains: filters.nom, mode: 'insensitive' } });
+      }
+      if (filters.prenoms?.trim()) {
+        searchConditions.push({ prenoms: { contains: filters.prenoms, mode: 'insensitive' } });
+      }
+      if (filters.dateNaissance?.trim()) {
+        // Recherche par année de naissance si seulement l'année est fournie
+        const yearMatch = filters.dateNaissance.match(/^\d{4}$/);
+        if (yearMatch) {
+          const year = parseInt(yearMatch[0], 10);
+          const startDate = new Date(year, 0, 1);
+          const endDate = new Date(year, 11, 31, 23, 59, 59);
+          searchConditions.push({
+            dateNaissance: {
+              gte: startDate,
+              lte: endDate
+            }
+          });
+        } else {
+          // Recherche par date exacte
+          const parsedDate = this.parseDate(filters.dateNaissance);
+          if (parsedDate) {
+            searchConditions.push({ dateNaissance: parsedDate });
+          }
+        }
+      }
+      if (filters.lieuNaissance?.trim()) {
+        searchConditions.push({ lieuNaissance: { contains: filters.lieuNaissance, mode: 'insensitive' } });
+      }
+      if (filters.diplome?.trim()) {
+        searchConditions.push({ diplome: { contains: filters.diplome, mode: 'insensitive' } });
+      }
+      if (filters.institution?.trim()) {
+        searchConditions.push({ lieuAffectation: { contains: filters.institution, mode: 'insensitive' } });
+      }
+    }
+
+    // Si des conditions de recherche existent, les ajouter avec OR
+    if (searchConditions.length > 0) {
+      whereConditions.OR = searchConditions;
+    }
     
     const [affectations, total] = await Promise.all([
       prisma.affectation.findMany({
-        where: {
-          OR: [
-            { prenom: { contains: query } },
-            { nom: { contains: query } },
-            { institutionAffectation: { contains: query } },
-            { specialite: { contains: query } }
-          ],
-          decret: {
-            statut: StatutDecret.PUBLIE
-          }
-        },
+        where: whereConditions,
         skip,
         take: limit,
         include: {
@@ -349,24 +672,15 @@ export class DecretService {
             select: {
               numero: true,
               titre: true,
-              datePublication: true
+              datePublication: true,
+              fichierPdf: true
             }
           }
         },
         orderBy: { dateCreation: 'desc' }
       }),
       prisma.affectation.count({
-        where: {
-          OR: [
-            { prenom: { contains: query } },
-            { nom: { contains: query } },
-            { institutionAffectation: { contains: query } },
-            { specialite: { contains: query } }
-          ],
-          decret: {
-            statut: StatutDecret.PUBLIE
-          }
-        }
+        where: whereConditions
       })
     ]);
     

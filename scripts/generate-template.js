@@ -7,14 +7,14 @@ async function generateTemplate() {
 
   // Définir les en-têtes
   const headers = [
-    'Prénom',
-    'Nom', 
-    'Date naissance',
-    'Lieu naissance',
-    'Niveau diplôme',
-    'Spécialité',
-    'Établissement',
-    'Institution affectation'
+    'Nom',
+    'Prénom(s)',
+    'Date de naissance',
+    'Lieu de naissance',
+    'Diplôme',
+    "Lieu d'obtention du diplôme",
+    "Lieu d'affectation",
+    'Numéro de décret'
   ];
 
   // Ajouter les en-têtes avec style
@@ -38,34 +38,34 @@ async function generateTemplate() {
   // Ajouter des exemples de données
   const sampleData = [
     [
-      'Jean',
       'Dupont',
+      'Jean',
       '15/3/1995',
       'Paris',
-      'Master',
-      'Informatique',
+      'Master Informatique',
       'Université de Paris',
-      'Ministère de la Défense'
+      'Ministère de la Défense',
+      'DECRET_2024_001'
     ],
     [
-      'Marie',
       'Martin',
+      'Marie',
       '22/7/1996',
       'Lyon',
-      'Licence',
-      'Administration',
+      'Licence Administration',
       'Université Lyon 2',
-      'Ministère de l\'Intérieur'
+      "Ministère de l'Intérieur",
+      'DECRET_2024_001'
     ],
     [
-      'Ahmed',
       'Diallo',
+      'Ahmed',
       '8/11/1994',
       'Niamey',
-      'Master',
-      'Génie Civil',
+      'Master Génie Civil',
       'Université Abdou Moumouni',
-      'Ministère des Infrastructures'
+      'Ministère des Infrastructures',
+      'DECRET_2024_001'
     ]
   ];
 
@@ -88,14 +88,14 @@ async function generateTemplate() {
 
   // Ajuster la largeur des colonnes
   worksheet.columns = [
-    { width: 15 }, // Prénom
-    { width: 15 }, // Nom
-    { width: 15 }, // Date naissance
-    { width: 20 }, // Lieu naissance
-    { width: 15 }, // Niveau diplôme
-    { width: 20 }, // Spécialité
-    { width: 30 }, // Établissement
-    { width: 35 }  // Institution affectation
+    { width: 18 }, // Nom
+    { width: 18 }, // Prénom(s)
+    { width: 18 }, // Date de naissance
+    { width: 22 }, // Lieu de naissance
+    { width: 24 }, // Diplôme
+    { width: 30 }, // Lieu d'obtention du diplôme
+    { width: 30 }, // Lieu d'affectation
+    { width: 22 }  // Numéro de décret
   ];
 
   // Ajouter une feuille d'instructions
@@ -108,25 +108,25 @@ async function generateTemplate() {
     [''],
     ['1. Utilisez la feuille "Affectations Service Civique" pour saisir vos données'],
     ['2. Respectez exactement le format des en-têtes (ne pas modifier)'],
-    ['3. Les champs obligatoires sont tous les colonnes présentes'],
+    ['3. Les colonnes indiquées sont toutes obligatoires'],
     ['4. Format de date : J/M/AAAA (exemple: 15/3/1995)'],
     ['5. Supprimez les lignes d\'exemple avant l\'import'],
     [''],
     ['COLONNES REQUISES :'],
-    ['• Prénom : Prénom de la personne'],
     ['• Nom : Nom de famille'],
-    ['• Date naissance : Format J/M/AAAA'],
-    ['• Lieu naissance : Ville de naissance'],
-    ['• Niveau diplôme : Licence, Master, Doctorat, etc.'],
-    ['• Spécialité : Domaine d\'études'],
-    ['• Établissement : Nom de l\'université/école'],
-    ['• Institution affectation : Ministère ou organisme d\'affectation'],
+    ['• Prénom(s) : Prénom ou liste de prénoms'],
+    ['• Date de naissance : Format J/M/AAAA'],
+    ['• Lieu de naissance : Ville ou pays de naissance'],
+    ['• Diplôme : Intitulé complet du diplôme obtenu'],
+    ['• Lieu d\'obtention du diplôme : Établissement où le diplôme a été délivré'],
+    ['• Lieu d\'affectation : Ministère ou organisme d\'affectation'],
+    ['• Numéro de décret : Numéro unique du décret correspondant'],
     [''],
     ['EXEMPLES DE VALEURS ACCEPTÉES :'],
     [''],
-    ['Niveau diplôme : Licence, Master, Doctorat, BTS, DUT, Ingénieur'],
-    ['Spécialité : Informatique, Droit, Médecine, Économie, etc.'],
-    ['Institution affectation : Ministère de la Santé, Ministère de l\'Éducation, etc.'],
+    ['Diplôme : Licence en Droit, Master Informatique, Doctorat en Médecine'],
+    ['Lieu d\'obtention du diplôme : Université de Paris, ENS, etc.'],
+    ['Lieu d\'affectation : Ministère de la Santé, Ministère de l\'Éducation, etc.'],
     [''],
     ['ATTENTION :'],
     ['• Vérifiez que toutes les cellules sont remplies'],

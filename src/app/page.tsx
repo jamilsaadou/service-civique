@@ -23,10 +23,6 @@ export default function Home() {
               <Link href="/consultation" className="text-gray-700 hover:text-orange-600 transition-colors">
                 Consulter les affectations
               </Link>
-              <Link href="/login" className="flex items-center text-gray-700 hover:text-orange-600 transition-colors">
-                <Shield className="h-4 w-4 mr-1" />
-                Administration
-              </Link>
             </nav>
           </div>
         </div>

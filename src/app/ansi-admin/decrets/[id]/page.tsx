@@ -16,14 +16,14 @@ import {
 
 interface Affectation {
   id: string;
-  prenom: string;
+  prenoms: string;
   nom: string;
   dateNaissance: string;
   lieuNaissance: string;
-  niveauDiplome: string;
-  specialite: string;
-  etablissement: string;
-  institutionAffectation: string;
+  diplome: string;
+  lieuObtentionDiplome: string;
+  lieuAffectation: string;
+  numeroDecret: string;
 }
 
 interface Decret {
@@ -252,9 +252,8 @@ export default function DecretDetailPage() {
                       <th className="border border-gray-800 px-3 py-2 text-left text-xs font-bold">Prénom et Nom</th>
                       <th className="border border-gray-800 px-3 py-2 text-left text-xs font-bold">Date de Naissance</th>
                       <th className="border border-gray-800 px-3 py-2 text-left text-xs font-bold">Lieu de Naissance</th>
-                      <th className="border border-gray-800 px-3 py-2 text-left text-xs font-bold">Niveau/Diplôme</th>
-                      <th className="border border-gray-800 px-3 py-2 text-left text-xs font-bold">Spécialité</th>
-                      <th className="border border-gray-800 px-3 py-2 text-left text-xs font-bold">Établissement</th>
+                      <th className="border border-gray-800 px-3 py-2 text-left text-xs font-bold">Diplôme</th>
+                      <th className="border border-gray-800 px-3 py-2 text-left text-xs font-bold">Établissement d'obtention</th>
                       <th className="border border-gray-800 px-3 py-2 text-left text-xs font-bold">Institution d'Affectation</th>
                     </tr>
                   </thead>
@@ -263,16 +262,15 @@ export default function DecretDetailPage() {
                       <tr key={affectation.id} className="hover:bg-gray-50 print:hover:bg-transparent">
                         <td className="border border-gray-800 px-3 py-2 text-sm">{index + 1}</td>
                         <td className="border border-gray-800 px-3 py-2 text-sm font-medium">
-                          {affectation.prenom} {affectation.nom}
+                          {affectation.prenoms} {affectation.nom}
                         </td>
                         <td className="border border-gray-800 px-3 py-2 text-sm">
                           {new Date(affectation.dateNaissance).toLocaleDateString('fr-FR')}
                         </td>
                         <td className="border border-gray-800 px-3 py-2 text-sm">{affectation.lieuNaissance}</td>
-                        <td className="border border-gray-800 px-3 py-2 text-sm">{affectation.niveauDiplome}</td>
-                        <td className="border border-gray-800 px-3 py-2 text-sm">{affectation.specialite}</td>
-                        <td className="border border-gray-800 px-3 py-2 text-sm">{affectation.etablissement}</td>
-                        <td className="border border-gray-800 px-3 py-2 text-sm">{affectation.institutionAffectation}</td>
+                        <td className="border border-gray-800 px-3 py-2 text-sm">{affectation.diplome}</td>
+                        <td className="border border-gray-800 px-3 py-2 text-sm">{affectation.lieuObtentionDiplome}</td>
+                        <td className="border border-gray-800 px-3 py-2 text-sm">{affectation.lieuAffectation}</td>
                       </tr>
                     ))}
                   </tbody>

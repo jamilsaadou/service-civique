@@ -25,7 +25,7 @@ export default function AdminLayout({
       const token = localStorage.getItem('ansi_admin_token');
       const userData = localStorage.getItem('ansi_admin_user');
 
-      if (token === 'authenticated' && userData) {
+      if (token && userData) {
         try {
           const parsedUser = JSON.parse(userData);
           setUser(parsedUser);

@@ -12,14 +12,14 @@ Ce guide vous explique comment importer des affectations de service civique dans
 - **Format requis**: `.xlsx` ou `.xls`
 - **Télécharger le modèle**: Utilisez le bouton "Télécharger le modèle" sur la page d'import
 - **Colonnes obligatoires**:
-  - Prénom
   - Nom
-  - Date naissance (format: J/M/AAAA)
-  - Lieu naissance
-  - Niveau diplôme
-  - Spécialité
-  - Établissement
-  - Institution affectation
+  - Prénom(s)
+  - Date de naissance (format: J/M/AAAA)
+  - Lieu de naissance
+  - Diplôme
+  - Lieu d'obtention du diplôme
+  - Lieu d'affectation
+  - Numéro de décret
 
 #### Fichier PDF du décret
 - **Format requis**: `.pdf`
@@ -58,14 +58,14 @@ Ce guide vous explique comment importer des affectations de service civique dans
 
 | Champ | Exemples |
 |-------|----------|
-| **Prénom** | Jean, Marie, Ahmed, Fatima |
 | **Nom** | Dupont, Martin, Diallo, Ousmane |
-| **Date naissance** | 15/3/1995, 22/7/1996 |
-| **Lieu naissance** | Paris, Lyon, Niamey, Zinder |
-| **Niveau diplôme** | Licence, Master, Doctorat, BTS, DUT, Ingénieur |
-| **Spécialité** | Informatique, Droit, Médecine, Économie, Génie Civil |
-| **Établissement** | Université de Paris, Université Abdou Moumouni |
-| **Institution affectation** | Ministère de la Santé, Ministère de l'Éducation |
+| **Prénom(s)** | Jean, Marie, Ahmed, Fatima |
+| **Date de naissance** | 15/3/1995, 22/7/1996 |
+| **Lieu de naissance** | Paris, Lyon, Niamey, Zinder |
+| **Diplôme** | Licence Administration, Master Informatique, Doctorat en Médecine |
+| **Lieu d'obtention du diplôme** | Université de Paris, Université Abdou Moumouni |
+| **Lieu d'affectation** | Ministère de la Santé, Ministère de l'Éducation |
+| **Numéro de décret** | DECRET_2024_001, DECRET_2024_015 |
 
 ### Règles de validation
 

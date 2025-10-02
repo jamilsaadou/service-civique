@@ -67,7 +67,7 @@ export default function ImportPage() {
     
     const files = Array.from(e.dataTransfer.files);
     const file = files.find(file => 
-      file.name.endsWith('.xlsx') || file.name.endsWith('.xls')
+      file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv')
     );
     
     if (file) {
@@ -133,21 +133,8 @@ export default function ImportPage() {
       const result = await response.json();
 
       if (result.success) {
-        // Convertir les données pour l'affichage
-        const displayData: ImportedData[] = result.data.map((item: any, index: number) => ({
-          id: (index + 1).toString(),
-          prenom: item.prenom,
-          nom: item.nom,
-          dateNaissance: item.dateNaissance,
-          lieuNaissance: item.lieuNaissance,
-          niveauDiplome: item.niveauDiplome,
-          specialite: item.specialite,
-          etablissement: item.etablissement,
-          institutionAffectation: item.institutionAffectation,
-          numeroDecret: decretInfo.numero
-        }));
-
-        setImportedData(displayData);
+        // Les données sont déjà formatées et triées par le backend
+        setImportedData(result.data);
         setValidationErrors(result.errors || []);
         setCurrentStep('preview');
         
@@ -331,11 +318,11 @@ export default function ImportPage() {
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-6">Fichiers du décret</h3>
               
-              {/* Excel File Section */}
+              {/* Excel/CSV File Section */}
               <div className="mb-8">
                 <h4 className="text-md font-medium text-gray-900 mb-3 flex items-center">
                   <FileText className="h-5 w-5 mr-2 text-blue-600" />
-                  1. Fichier Excel des affectations *
+                  1. Fichier des affectations (Excel ou CSV) *
                 </h4>
                 
                 <div
@@ -377,7 +364,7 @@ export default function ImportPage() {
                       </div>
                       <input
                         type="file"
-                        accept=".xlsx,.xls"
+                        accept=".xlsx,.xls,.csv"
                         onChange={handleExcelFileSelect}
                         className="hidden"
                         id="excel-upload"
@@ -387,7 +374,7 @@ export default function ImportPage() {
                         className="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 cursor-pointer transition-colors"
                       >
                         <FileText className="mr-2 h-4 w-4" />
-                        Sélectionner fichier Excel
+                        Sélectionner fichier Excel/CSV
                       </label>
                     </div>
                   )}
@@ -471,9 +458,9 @@ export default function ImportPage() {
                   </a>
                 </div>
                 <div className="text-sm text-blue-800 space-y-1">
-                  <p>• Prénom | Nom | Date naissance | Lieu naissance</p>
-                  <p>• Niveau diplôme | Spécialité | Établissement</p>
-                  <p>• Institution affectation</p>
+                  <p>• Nom | Prénom(s) | Date de naissance | Lieu de naissance</p>
+                  <p>• Diplôme | Lieu d'obtention du diplôme | Lieu d'affectation</p>
+                  <p>• Numéro de décret</p>
                   <p className="font-medium mt-2">💡 Utilisez le modèle Excel ci-dessus pour un format parfait !</p>
                 </div>
               </div>

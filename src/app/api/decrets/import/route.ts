@@ -20,9 +20,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Vérifier les types de fichiers
-    if (!excelFile.name.match(/\.(xlsx|xls)$/i)) {
+    if (!excelFile.name.match(/\.(xlsx|xls|csv)$/i)) {
       return NextResponse.json(
-        { error: 'Le fichier Excel doit avoir une extension .xlsx ou .xls' },
+        { error: 'Le fichier doit avoir une extension .xlsx, .xls ou .csv' },
         { status: 400 }
       );
     }
@@ -34,8 +34,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Traiter le fichier Excel
-    const { data, errors } = await DecretService.processExcelFile(excelFile);
+    // Traiter le fichier (Excel ou CSV)
+    const isCsvFile = excelFile.name.match(/\.csv$/i);
+    const { data, errors } = isCsvFile 
+      ? await DecretService.processCsvFile(excelFile)
+      : await DecretService.processExcelFile(excelFile);
 
     if (errors.length > 0) {
       return NextResponse.json({
@@ -44,6 +47,12 @@ export async function POST(request: NextRequest) {
         data: []
       });
     }
+
+    // Trier les données par ordre alphabétique
+    const sortedData = DecretService.sortDataAlphabetically(data);
+
+    // Convertir pour l'affichage frontend
+    const displayData = DecretService.convertToDisplayData(sortedData, numero);
 
     // Générer des noms de fichiers uniques
     const timestamp = Date.now();
@@ -63,10 +72,10 @@ export async function POST(request: NextRequest) {
     const pdfFullPath = join(process.cwd(), 'public', pdfPath);
     await writeFile(pdfFullPath, pdfBuffer);
 
-    // Créer le décret avec les affectations
+    // Créer le décret avec les affectations (utiliser les données triées)
     const decret = await DecretService.createDecret(
       { numero, titre, description },
-      data,
+      sortedData,
       excelPath,
       pdfPath
     );
@@ -74,7 +83,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       decret,
-      data,
+      data: displayData, // Retourner les données formatées pour le frontend
       errors: []
     });
 
