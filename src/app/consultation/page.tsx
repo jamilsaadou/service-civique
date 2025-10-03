@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, Shield, ArrowLeft, User, Calendar, MapPin, Building, FileText, AlertCircle, Download, Filter, X } from 'lucide-react';
+import { Search, Shield, ArrowLeft, User, Calendar, MapPin, Building, FileText, AlertCircle, Download, Filter, X, BadgeCheck } from 'lucide-react';
 
 interface Assignment {
   id: string;
@@ -1048,6 +1048,63 @@ export default function Consultation() {
           </div>
         )}
       </div>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Logo centré */}
+          <div className="flex justify-center mb-8">
+            <Image 
+              src="/uploads/images/armoirie VJ.png" 
+              alt="République du Niger" 
+              width={120} 
+              height={120} 
+              className="mx-auto"
+            />
+          </div>
+          
+          {/* 3 colonnes de liens */}
+          <div className="grid md:grid-cols-3 gap-8 mb-8">
+            <div>
+              <h4 className="font-semibold mb-4">Services</h4>
+              <ul className="space-y-2 text-gray-400">
+                <li><Link href="/consultation" className="hover:text-white transition-colors">Consultation</Link></li>
+                <li><Link href="/#info" className="hover:text-white transition-colors">Information</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Support</h4>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#" className="hover:text-white transition-colors">Aide</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Légal</h4>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#" className="hover:text-white transition-colors">Mentions légales</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Confidentialité</a></li>
+              </ul>
+            </div>
+          </div>
+          
+          {/* Ligne de séparation et certification */}
+          <div className="border-t border-gray-800 pt-8">
+            <div className="flex items-center justify-center mb-3">
+              <BadgeCheck className="h-6 w-6 text-blue-500 mr-2" />
+              <p className="text-gray-300 text-sm">
+                Par l'Agence Nationale pour la Société de l'Information
+              </p>
+            </div>
+            <p className="text-center text-gray-400 text-sm mb-3">
+              &copy; 2025 Ministère de l'Enseignement Supérieur, de la Recherche et de l'Innovation Technologique. Tous droits réservés.
+            </p>
+            <p className="text-center text-gray-500 text-xs">
+              nnumerique
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

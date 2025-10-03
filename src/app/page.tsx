@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, Users, FileText, Shield, ArrowRight, CheckCircle, Clock, Award, Heart, Globe, BookOpen, Target } from 'lucide-react';
+import { Search, Users, FileText, Shield, ArrowRight, CheckCircle, Clock, Award, Heart, Globe, BookOpen, Target, BadgeCheck } from 'lucide-react';
 
 export default function Home() {
   return (
@@ -38,7 +38,6 @@ export default function Home() {
             </h2>
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
               Consultez facilement vos affectations officielles au service civique national. 
-              Une plateforme moderne et sécurisée pour tous les appelés.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link 
@@ -416,21 +415,19 @@ export default function Home() {
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center mb-4">
-                  <Image 
-                    src="/uploads/images/armoirieblanc.png" 
-                    alt="République du Niger" 
-                    width={78} 
-                    height={78} 
-                    className="mx-auto mb-4"
-                  />
-              </div>
-              <p className="text-gray-400">
-                Plateforme officielle d'information pour les appelés au service civique national.
-              </p>
-            </div>
+          {/* Logo centré */}
+          <div className="flex justify-center mb-8">
+            <Image 
+              src="/uploads/images/armoirie VJ.png" 
+              alt="République du Niger" 
+              width={120} 
+              height={120} 
+              className="mx-auto"
+            />
+          </div>
+          
+          {/* 3 colonnes de liens */}
+          <div className="grid md:grid-cols-3 gap-8 mb-8">
             <div>
               <h4 className="font-semibold mb-4">Services</h4>
               <ul className="space-y-2 text-gray-400">
@@ -453,8 +450,21 @@ export default function Home() {
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 Ministère de l'Enseignement Supérieur, de la Recherche et de l'Innovation Technologique. Tous droits réservés.</p>
+          
+          {/* Ligne de séparation et certification */}
+          <div className="border-t border-gray-800 pt-8">
+            <div className="flex items-center justify-center mb-3">
+              <BadgeCheck className="h-6 w-6 text-blue-500 mr-2" />
+              <p className="text-gray-300 text-sm">
+                Par l'Agence Nationale pour la Société de l'Information
+              </p>
+            </div>
+            <p className="text-center text-gray-400 text-sm mb-3">
+              &copy; 2025 Ministère de l'Enseignement Supérieur, de la Recherche et de l'Innovation Technologique. Tous droits réservés.
+            </p>
+            <p className="text-center text-gray-500 text-xs">
+              nnumerique
+            </p>
           </div>
         </div>
       </footer>
