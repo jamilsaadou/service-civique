@@ -17,6 +17,7 @@ import {
   Users,
   Loader2
 } from 'lucide-react';
+import { authGet, authPost, authDelete } from '../../../lib/api-client';
 
 interface Decree {
   id: string;
@@ -77,7 +78,7 @@ export default function DecreesPage() {
         params.append('status', status);
       }
       
-      const response = await fetch(`/api/decrets?${params.toString()}`);
+      const response = await authGet(`/api/decrets?${params.toString()}`);
       if (!response.ok) {
         throw new Error('Erreur lors du chargement des décrets');
       }
@@ -129,9 +130,7 @@ export default function DecreesPage() {
     if (!selectedDecree) return;
     
     try {
-      const response = await fetch(`/api/decrets/${selectedDecree.id}`, {
-        method: 'DELETE',
-      });
+      const response = await authDelete(`/api/decrets/${selectedDecree.id}`);
       
       if (!response.ok) {
         throw new Error('Erreur lors de la suppression');
@@ -149,9 +148,7 @@ export default function DecreesPage() {
 
   const handlePublishDecree = async (decree: Decree) => {
     try {
-      const response = await fetch(`/api/decrets/${decree.id}/publish`, {
-        method: 'POST',
-      });
+      const response = await authPost(`/api/decrets/${decree.id}/publish`);
       
       if (!response.ok) {
         throw new Error('Erreur lors de la publication');

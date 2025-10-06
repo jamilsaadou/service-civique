@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@/generated/prisma';
 import bcrypt from 'bcryptjs';
+import { generateToken } from '@/lib/jwt';
 
 const prisma = new PrismaClient();
 
@@ -41,8 +42,12 @@ export async function POST(request: NextRequest) {
       }, { status: 401 });
     }
 
-    // Générer un token simple (en production, utiliser JWT)
-    const token = Buffer.from(`${user.id}:${Date.now()}`).toString('base64');
+    // Générer un token JWT sécurisé
+    const token = generateToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role
+    });
 
     console.log('Authentification réussie pour:', user.email, 'Role:', user.role);
 

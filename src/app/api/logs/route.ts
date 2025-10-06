@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '../../../lib/prisma';
+import { withAuth } from '../../../lib/auth-middleware';
 
 // Fonction pour extraire les informations de l'appareil depuis le User-Agent
 function extractDeviceInfo(userAgent: string): { deviceType: string; deviceName: string } {
@@ -83,27 +84,31 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Récupérer les logs d'activité
+// Récupérer les logs d'activité (protégé - admin seulement)
 export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const action = searchParams.get('action');
-    const limit = parseInt(searchParams.get('limit') || '100');
-    
-    const where = action ? { action } : {};
-    
-    const logs = await prisma.logActivite.findMany({
-      where,
-      orderBy: { dateCreation: 'desc' },
-      take: limit
-    });
-    
-    return NextResponse.json({ logs });
-  } catch (error) {
-    console.error('Erreur lors de la récupération des logs:', error);
-    return NextResponse.json(
-      { error: 'Erreur lors de la récupération des logs' },
-      { status: 500 }
-    );
-  }
+  return withAuth(request, async (req) => {
+    try {
+      const { searchParams } = new URL(req.url);
+      const action = searchParams.get('action');
+      const limit = parseInt(searchParams.get('limit') || '100');
+      
+      const where = action ? { action } : {};
+      
+      const logs = await prisma.logActivite.findMany({
+        where,
+        orderBy: { dateCreation: 'desc' },
+        take: limit
+      });
+      
+      return NextResponse.json({ logs });
+    } catch (error) {
+      console.error('Erreur lors de la récupération des logs:', error);
+      return NextResponse.json(
+        { error: 'Erreur lors de la récupération des logs' },
+        { status: 500 }
+      );
+    }
+  }, {
+    requiredRole: ['ADMIN', 'SUPER_ADMIN']
+  });
 }

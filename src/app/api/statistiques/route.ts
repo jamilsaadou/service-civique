@@ -1,9 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '../../../lib/prisma';
 import { StatutDecret } from '../../../generated/prisma';
+import { withAuth } from '../../../lib/auth-middleware';
 
-export async function GET() {
-  try {
+export async function GET(request: NextRequest) {
+  return withAuth(request, async (req) => {
+    try {
     // Récupérer les statistiques globales
     const [
       totalAffectations,
@@ -196,48 +198,51 @@ export async function GET() {
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
 
-    return NextResponse.json({
-      global: {
-        totalAffectations,
-        totalDecrets,
-        decretsPublies,
-        nombreInstitutions: institutionsUniques.length,
-        nombreLieuxNaissance: lieuxNaissanceUniques.length,
-        nombreDiplomes: diplomesUniques.length,
-        totalRecherches,
-        totalConsultations
-      },
-      parInstitution: affectationsParInstitution.map(item => ({
-        nom: item.lieuAffectation,
-        nombreAffectations: item._count.id,
-        pourcentage: totalAffectations > 0 
-          ? ((item._count.id / totalAffectations) * 100).toFixed(1)
-          : '0'
-      })),
-      parDiplome: affectationsParDiplome.map(item => ({
-        nom: item.diplome,
-        nombreAffectations: item._count.id,
-        pourcentage: totalAffectations > 0
-          ? ((item._count.id / totalAffectations) * 100).toFixed(1)
-          : '0'
-      })),
-      parLieuNaissance: affectationsParLieuNaissance.map(item => ({
-        nom: item.lieuNaissance,
-        nombreAffectations: item._count.id
-      })),
-      recherchesParJour: statistiquesRecherches,
-      recherchesParIP: recherchesParIP.map(item => ({
-        adresseIp: item.adresseIp,
-        nombreRecherches: item._count.id
-      })),
-      topTermesRecherche
-    });
+      return NextResponse.json({
+        global: {
+          totalAffectations,
+          totalDecrets,
+          decretsPublies,
+          nombreInstitutions: institutionsUniques.length,
+          nombreLieuxNaissance: lieuxNaissanceUniques.length,
+          nombreDiplomes: diplomesUniques.length,
+          totalRecherches,
+          totalConsultations
+        },
+        parInstitution: affectationsParInstitution.map(item => ({
+          nom: item.lieuAffectation,
+          nombreAffectations: item._count.id,
+          pourcentage: totalAffectations > 0 
+            ? ((item._count.id / totalAffectations) * 100).toFixed(1)
+            : '0'
+        })),
+        parDiplome: affectationsParDiplome.map(item => ({
+          nom: item.diplome,
+          nombreAffectations: item._count.id,
+          pourcentage: totalAffectations > 0
+            ? ((item._count.id / totalAffectations) * 100).toFixed(1)
+            : '0'
+        })),
+        parLieuNaissance: affectationsParLieuNaissance.map(item => ({
+          nom: item.lieuNaissance,
+          nombreAffectations: item._count.id
+        })),
+        recherchesParJour: statistiquesRecherches,
+        recherchesParIP: recherchesParIP.map(item => ({
+          adresseIp: item.adresseIp,
+          nombreRecherches: item._count.id
+        })),
+        topTermesRecherche
+      });
 
-  } catch (error) {
-    console.error('Erreur lors de la récupération des statistiques:', error);
-    return NextResponse.json(
-      { error: 'Erreur interne du serveur' },
-      { status: 500 }
-    );
-  }
+    } catch (error) {
+      console.error('Erreur lors de la récupération des statistiques:', error);
+      return NextResponse.json(
+        { error: 'Erreur interne du serveur' },
+        { status: 500 }
+      );
+    }
+  }, {
+    requiredRole: ['ADMIN', 'SUPER_ADMIN', 'OPERATEUR', 'LECTEUR']
+  });
 }

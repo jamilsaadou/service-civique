@@ -13,6 +13,7 @@ import {
   Eye,
   Loader2
 } from 'lucide-react';
+import { authGet } from '@/lib/api-client';
 
 interface Affectation {
   id: string;
@@ -50,7 +51,7 @@ export default function DecretDetailPage() {
         setLoading(true);
         setError(null);
         
-        const response = await fetch(`/api/decrets/${params.id}`);
+        const response = await authGet(`/api/decrets/${params.id}`);
         if (!response.ok) {
           throw new Error('Erreur lors du chargement du décret');
         }

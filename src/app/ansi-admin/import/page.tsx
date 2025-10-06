@@ -14,6 +14,7 @@ import {
   X,
   Download
 } from 'lucide-react';
+import { authPost } from '@/lib/api-client';
 
 interface ImportedData {
   id: string;
@@ -125,10 +126,7 @@ export default function ImportPage() {
       formData.append('titre', decretInfo.titre);
       formData.append('description', decretInfo.description);
 
-      const response = await fetch('/api/decrets/import', {
-        method: 'POST',
-        body: formData,
-      });
+      const response = await authPost('/api/decrets/import', formData);
 
       const result = await response.json();
 
@@ -167,9 +165,7 @@ export default function ImportPage() {
     setIsProcessing(true);
     
     try {
-      const response = await fetch(`/api/decrets/${decretInfo.id}/publish`, {
-        method: 'POST',
-      });
+      const response = await authPost(`/api/decrets/${decretInfo.id}/publish`);
 
       const result = await response.json();
 
