@@ -22,7 +22,7 @@ export async function GET(request: Request) {
 
     switch (field) {
       case 'lieuNaissance':
-        // Récupérer les lieux de naissance uniques des affectations publiées
+        // Récupérer les lieu x de naissance uniques des affectations publiées
         const lieuxNaissance = await prisma.affectation.findMany({
           where: {
             decret: {
