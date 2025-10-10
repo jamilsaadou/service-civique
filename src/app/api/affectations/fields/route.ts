@@ -48,12 +48,18 @@ export async function GET(request: Request) {
         // Récupérer les institutions d'affectation uniques des affectations publiées
         const institutions = await prisma.affectation.findMany({
           where: {
-            decret: {
-              statut: 'PUBLIE'
-            },
-            lieuAffectation: {
-              contains: query
-            }
+            AND: [
+              {
+                decret: {
+                  statut: 'PUBLIE'
+                }
+              },
+              {
+                lieuAffectation: {
+                  contains: query
+                }
+              }
+            ]
           },
           select: {
             lieuAffectation: true
