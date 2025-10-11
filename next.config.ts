@@ -6,9 +6,16 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     serverActions: {
-      bodySizeLimit: '10mb'
-    }
-  }
+      bodySizeLimit: "100mb",
+    },
+  },
+  // Configuration pour les API routes
+  api: {
+    bodyParser: {
+      sizeLimit: "100mb",
+    },
+    responseLimit: "100mb",
+  },
 };
 
 export default nextConfig;
