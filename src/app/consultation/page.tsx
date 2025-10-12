@@ -750,7 +750,9 @@ export default function Consultation() {
                           </div>
                           <div className="flex items-center text-gray-700">
                             <User className="h-4 w-4 mr-2 text-gray-400" />
-                            <span className="text-sm">{assignment.niveauDiplome} en {assignment.specialite}</span>
+                            <span className="text-sm">{assignment.niveauDiplome} 
+                            {/* en {assignment.specialite} */}
+                            </span>
                           </div>
                         </div>
                         
