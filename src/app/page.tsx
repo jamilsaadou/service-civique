@@ -78,10 +78,10 @@ export default function Home() {
                 <FileText className="h-8 w-8 text-green-600" />
               </div>
               <h4 className="text-xl font-semibold text-gray-900 mb-2">
-                Publication des décrets
+                Publication des arrêtés
               </h4>
               <p className="text-gray-600">
-                Les ministères publient officiellement les listes d'affectation via des décrets validés
+                Les ministères publient officiellement les listes d'affectation via des arrêtés validés
               </p>
             </div>
 
@@ -384,7 +384,7 @@ export default function Home() {
                 Publication
               </h4>
               <p className="text-gray-600">
-                Publication officielle des affectations par décret ministériel
+                Publication officielle des affectations par arrêté ministériel
               </p>
             </div>
           </div>

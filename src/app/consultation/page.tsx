@@ -730,7 +730,7 @@ export default function Consultation() {
                           </h4>
                           <div className="flex items-center text-sm text-gray-600 mt-1">
                             <FileText className="h-4 w-4 mr-1" />
-                            Décret N° {assignment.numeroDecret}
+                            Arrêté N° {assignment.numeroDecret}
                           </div>
                         </div>
                         <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
@@ -775,7 +775,7 @@ export default function Consultation() {
                           className="inline-flex items-center px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors"
                         >
                           <Download className="mr-2 h-4 w-4" />
-                          Télécharger le décret officiel
+                          Télécharger l'arrêté officiel
                         </button>
                       </div>
                     </div>
@@ -860,7 +860,7 @@ export default function Consultation() {
                       Institution
                     </th>
                     <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">
-                      Décret
+                      Arrêté
                     </th>
                     <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
                       Statut
@@ -928,7 +928,7 @@ export default function Consultation() {
                           <button
                             onClick={() => handleDownloadDecree(assignment)}
                             className="inline-flex items-center px-2 py-1 bg-red-600 text-white text-xs font-medium rounded hover:bg-red-700 transition-colors"
-                            title="Télécharger le décret officiel"
+                            title="Télécharger l'arrêté officiel"
                           >
                             <Download className="h-3 w-3 md:h-4 md:w-4" />
                             <span className="ml-1 hidden md:inline">PDF</span>
@@ -976,7 +976,7 @@ export default function Consultation() {
                   </div>
                   
                   <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-200">
-                    <span className="text-xs text-gray-500">Décret: {assignment.numeroDecret}</span>
+                    <span className="text-xs text-gray-500">Arrêté: {assignment.numeroDecret}</span>
                     <button
                       onClick={() => handleDownloadDecree(assignment)}
                       className="inline-flex items-center px-3 py-1 bg-red-600 text-white text-xs font-medium rounded hover:bg-red-700 transition-colors"

@@ -17,6 +17,7 @@ import {
   Search,
   Eye
 } from 'lucide-react';
+import { authGet } from '../../../lib/api-client';
 
 interface StatistiquesGlobales {
   totalAffectations: number;
@@ -84,7 +85,7 @@ export default function StatisticsPage() {
   const loadStatistics = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/statistiques');
+      const response = await authGet('/api/statistiques');
       
       if (response.ok) {
         const data = await response.json();
@@ -177,7 +178,7 @@ export default function StatisticsPage() {
                 <FileText className="h-6 w-6 text-blue-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Décrets Publiés</p>
+                <p className="text-sm font-medium text-gray-600">Arrêtés Publiés</p>
                 <p className="text-2xl font-bold text-gray-900">{stats.global.decretsPublies}</p>
                 <p className="text-sm text-green-600">
                   {tauxPublication}% du total
@@ -365,8 +366,8 @@ export default function StatisticsPage() {
             <div className="flex items-center">
               <BarChart3 className="h-8 w-8 mr-3" />
               <div>
-                <h4 className="text-lg font-semibold">Total Décrets</h4>
-                <p className="text-blue-100">{stats.global.totalDecrets} décrets créés</p>
+                <h4 className="text-lg font-semibold">Total Arrêtés</h4>
+                <p className="text-blue-100">{stats.global.totalDecrets} arrêtés créés</p>
               </div>
             </div>
           </div>
@@ -376,7 +377,7 @@ export default function StatisticsPage() {
               <TrendingUp className="h-8 w-8 mr-3" />
               <div>
                 <h4 className="text-lg font-semibold">Taux de Publication</h4>
-                <p className="text-green-100">{tauxPublication}% des décrets publiés</p>
+                <p className="text-green-100">{tauxPublication}% des arrêtés publiés</p>
               </div>
             </div>
           </div>

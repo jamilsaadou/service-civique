@@ -132,7 +132,7 @@ export default function AdminDashboard() {
                 <FileText className="h-6 w-6 text-blue-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Décrets Publiés</p>
+                <p className="text-sm font-medium text-gray-600">Arrêtés Publiés</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {stats?.decretsPublies || '0'}
                 </p>
@@ -146,7 +146,7 @@ export default function AdminDashboard() {
                 <FileText className="h-6 w-6 text-purple-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Décrets</p>
+                <p className="text-sm font-medium text-gray-600">Total Arrêtés</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {stats?.totalDecrets || '0'}
                 </p>
@@ -179,7 +179,7 @@ export default function AdminDashboard() {
               <div className="p-2 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors">
                 <Upload className="h-6 w-6 text-green-600" />
               </div>
-              <h3 className="ml-3 text-lg font-semibold text-gray-900">Importer un décret</h3>
+              <h3 className="ml-3 text-lg font-semibold text-gray-900">Importer un arrêté</h3>
             </div>
             <p className="text-gray-600">Importez un nouveau fichier Excel d'affectations</p>
           </Link>
@@ -192,9 +192,9 @@ export default function AdminDashboard() {
               <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
                 <FileText className="h-6 w-6 text-blue-600" />
               </div>
-              <h3 className="ml-3 text-lg font-semibold text-gray-900">Gérer les décrets</h3>
+              <h3 className="ml-3 text-lg font-semibold text-gray-900">Gérer les arrêtés</h3>
             </div>
-            <p className="text-gray-600">Consultez et modifiez les décrets existants</p>
+            <p className="text-gray-600">Consultez et modifiez les arrêtés existants</p>
           </Link>
 
           <Link 
@@ -228,7 +228,7 @@ export default function AdminDashboard() {
         <div className="bg-white rounded-lg shadow mb-8">
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Décrets récents</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Arrêtés récents</h3>
               <Link 
                 href="/ansi-admin/decrets"
                 className="text-orange-600 hover:text-orange-700 text-sm font-medium"
@@ -243,7 +243,7 @@ export default function AdminDashboard() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Décret
+                    Arrêté
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Date de création
@@ -299,7 +299,7 @@ export default function AdminDashboard() {
                 ) : (
                   <tr>
                     <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
-                      Aucun décret disponible
+                      Aucun arrêté disponible
                     </td>
                   </tr>
                 )}
