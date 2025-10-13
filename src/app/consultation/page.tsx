@@ -117,21 +117,30 @@ export default function Consultation() {
     }
   };
 
-  // Charger la liste des institutions au chargement
+  // Charger les affectations page par page
   useEffect(() => {
-    const loadInstitutions = async () => {
-      try {
-        const response = await fetch('/api/affectations/fields?field=institutionAffectation&q=');
-        if (response.ok) {
-          const data = await response.json();
-          setInstitutionsList(data.results || []);
+    if (!hasSearched) {
+      loadAssignments(currentPage, itemsPerPage);
+    }
+  }, [currentPage, itemsPerPage]);
+
+  // Charger les institutions seulement quand l'utilisateur ouvre les filtres
+  useEffect(() => {
+    if (showFilters && institutionsList.length === 0) {
+      const loadInstitutions = async () => {
+        try {
+          const response = await fetch('/api/affectations/fields?field=institutionAffectation&q=');
+          if (response.ok) {
+            const data = await response.json();
+            setInstitutionsList(data.results || []);
+          }
+        } catch (error) {
+          console.error('Erreur lors du chargement des institutions:', error);
         }
-      } catch (error) {
-        console.error('Erreur lors du chargement des institutions:', error);
-      }
-    };
-    loadInstitutions();
-  }, []);
+      };
+      loadInstitutions();
+    }
+  }, [showFilters]);
 
   // Fermer les dropdowns quand on clique à l'extérieur
   useEffect(() => {
@@ -148,9 +157,6 @@ export default function Consultation() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    loadAssignments();
-  }, [currentPage, itemsPerPage]);
 
   // Gestionnaires de pagination
   const handleItemsPerPageChange = (newItemsPerPage: number) => {
@@ -810,7 +816,7 @@ export default function Consultation() {
           </div>
         )}
 
-        {/* Tableau des Affectations Publiées */}
+        {/* Aperçu des affectations - Première page uniquement */}
         {!hasSearched && (
           <div className="bg-white rounded-xl shadow-lg p-8">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 space-y-4 md:space-y-0">

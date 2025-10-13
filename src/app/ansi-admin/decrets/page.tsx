@@ -95,16 +95,11 @@ export default function DecreesPage() {
     }
   };
 
-  // Charger les décrets au montage du composant
-  useEffect(() => {
-    loadDecrees();
-  }, []);
-
-  // Recharger les décrets quand les filtres ou la pagination changent
+  // Charger les décrets au montage du composant ET quand les filtres changent
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       loadDecrees(searchTerm, statusFilter, currentPage, itemsPerPage);
-    }, 300); // Debounce de 300ms pour éviter trop de requêtes
+    }, searchTerm ? 300 : 0); // Debounce seulement pour la recherche texte
 
     return () => clearTimeout(timeoutId);
   }, [searchTerm, statusFilter, currentPage, itemsPerPage]);
