@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { authGet } from '../../../lib/api-client';
 
 interface Log {
   id: string;
@@ -29,11 +30,12 @@ export default function LogsPage() {
   const fetchLogs = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/logs?limit=200');
+      const response = await authGet('/api/logs?limit=200');
       const data = await response.json();
-      setLogs(data.logs);
+      setLogs(data.logs || []);
     } catch (error) {
       console.error('Erreur lors du chargement des logs:', error);
+      setLogs([]);
     } finally {
       setLoading(false);
     }

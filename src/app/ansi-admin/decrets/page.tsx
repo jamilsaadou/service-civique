@@ -95,16 +95,11 @@ export default function DecreesPage() {
     }
   };
 
-  // Charger les décrets au montage du composant
-  useEffect(() => {
-    loadDecrees();
-  }, []);
-
-  // Recharger les décrets quand les filtres ou la pagination changent
+  // Charger les décrets au montage du composant ET quand les filtres changent
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       loadDecrees(searchTerm, statusFilter, currentPage, itemsPerPage);
-    }, 300); // Debounce de 300ms pour éviter trop de requêtes
+    }, searchTerm ? 300 : 0); // Debounce seulement pour la recherche texte
 
     return () => clearTimeout(timeoutId);
   }, [searchTerm, statusFilter, currentPage, itemsPerPage]);
@@ -181,8 +176,8 @@ export default function DecreesPage() {
             <div className="flex items-center">
               <Shield className="h-8 w-8 text-green-600 mr-3" />
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Gestion des Décrets</h1>
-                <p className="text-sm text-gray-600">Consultez et gérez tous les décrets</p>
+                <h1 className="text-2xl font-bold text-gray-900">Gestion des Arrêtés</h1>
+                <p className="text-sm text-gray-600">Consultez et gérez tous les arrêtés</p>
               </div>
             </div>
             <Link 
@@ -205,7 +200,7 @@ export default function DecreesPage() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Rechercher un décret..."
+                placeholder="Rechercher un arrêté..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
@@ -232,7 +227,7 @@ export default function DecreesPage() {
             className="inline-flex items-center px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors"
           >
             <Plus className="mr-2 h-4 w-4" />
-            Nouveau décret
+            Nouveau arrêté
           </Link>
         </div>
 
@@ -244,7 +239,7 @@ export default function DecreesPage() {
                 <FileText className="h-5 w-5 text-green-600" />
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-600">Total Décrets</p>
+                <p className="text-sm font-medium text-gray-600">Total Arrêtés</p>
                 <p className="text-xl font-bold text-gray-900">{loading ? '...' : total}</p>
               </div>
             </div>
@@ -298,7 +293,7 @@ export default function DecreesPage() {
           <div className="bg-white rounded-lg shadow p-8">
             <div className="flex items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-green-600 mr-3" />
-              <span className="text-gray-600">Chargement des décrets...</span>
+              <span className="text-gray-600">Chargement des arrêtés...</span>
             </div>
           </div>
         )}
@@ -326,8 +321,8 @@ export default function DecreesPage() {
         {!loading && !error && (
           <div className="bg-white rounded-lg shadow overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200 flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Liste des décrets ({total} au total)
+                <h3 className="text-lg font-semibold text-gray-900">
+                Liste des arrêtés ({total} au total)
               </h3>
               
               {/* Items per page selector */}
@@ -358,7 +353,7 @@ export default function DecreesPage() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Décret
+                      Arrêté
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Statut
@@ -452,7 +447,7 @@ export default function DecreesPage() {
                                 ? 'text-green-600 hover:text-green-900' 
                                 : 'text-gray-300 cursor-not-allowed'
                             }`}
-                            title={decree.fichierPdf ? "Télécharger le décret PDF" : "Aucun fichier PDF disponible"}
+                            title={decree.fichierPdf ? "Télécharger l'arrêté PDF" : "Aucun fichier PDF disponible"}
                           >
                             <Download className="h-4 w-4" />
                           </button>
@@ -460,7 +455,7 @@ export default function DecreesPage() {
                             <button 
                               onClick={() => handlePublishDecree(decree)}
                               className="text-purple-600 hover:text-purple-900 transition-colors"
-                              title="Publier le décret"
+                              title="Publier l'arrêté"
                             >
                               <FileText className="h-4 w-4" />
                             </button>
@@ -489,11 +484,11 @@ export default function DecreesPage() {
             {filteredDecrees.length === 0 && !loading && (
               <div className="text-center py-12">
                 <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun décret trouvé</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun arrêté trouvé</h3>
                 <p className="text-gray-600">
                   {searchTerm || statusFilter !== 'all' 
-                    ? 'Aucun décret ne correspond à vos critères de recherche.'
-                    : 'Commencez par importer votre premier décret.'
+                    ? 'Aucun arrêté ne correspond à vos critères de recherche.'
+                    : 'Commencez par importer votre premier arrêté.'
                   }
                 </p>
               </div>
@@ -569,10 +564,10 @@ export default function DecreesPage() {
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
                 <Trash2 className="h-6 w-6 text-red-600" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mt-4">Supprimer le décret</h3>
+              <h3 className="text-lg font-medium text-gray-900 mt-4">Supprimer l'arrêté</h3>
               <div className="mt-2 px-7 py-3">
                 <p className="text-sm text-gray-500">
-                  Êtes-vous sûr de vouloir supprimer le décret "{selectedDecree.numero}" ?
+                  Êtes-vous sûr de vouloir supprimer l'arrêté "{selectedDecree.numero}" ?
                   Cette action est irréversible.
                 </p>
               </div>
