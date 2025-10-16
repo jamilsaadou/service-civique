@@ -462,9 +462,9 @@ export default function Home() {
             <p className="text-center text-gray-400 text-sm mb-3">
               &copy; 2025 Ministère de l'Enseignement Supérieur, de la Recherche et de l'Innovation Technologique. Tous droits réservés.
             </p>
-            <p className="text-center text-gray-500 text-xs">
+            {/* <p className="text-center text-gray-500 text-xs">
               nnumerique
-            </p>
+            </p> */}
           </div>
         </div>
       </footer>
