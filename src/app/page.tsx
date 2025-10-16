@@ -442,13 +442,13 @@ export default function Home() {
                 <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
               </ul>
             </div>
-            <div>
+            {/* <div>
               <h4 className="font-semibold mb-4">Légal</h4>
               <ul className="space-y-2 text-gray-400">
                 <li><a href="#" className="hover:text-white transition-colors">Mentions légales</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Confidentialité</a></li>
               </ul>
-            </div>
+            </div> */}
           </div>
           
           {/* Ligne de séparation et certification */}
